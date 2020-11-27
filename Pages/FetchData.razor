@@ -1,4 +1,5 @@
 @page "/fetchdata"
+@using Newtonsoft.Json
 @inject HttpClient Http
 
 <h1>Weather forecast</h1>
@@ -34,12 +35,38 @@ else
     </table>
 }
 
+@if(weatherResponse == null)
+{
+    <p><em>Loading API Response</em></p>
+}
+else
+{
+    <p>Current Temperature:</p>
+    <h2>@weatherResponse.Main.Temperature °C</h2>
+}
+
 @code {
     private WeatherForecast[] forecasts;
+    private Models.WeatherResponse weatherResponse;
+    private const string endpoint = "http://api.openweathermap.org/data/2.5/weather?q=Argentina,ar&APPID=bb0335acd4e0f8ddc002c0472f2ffb57&units=Metric";
 
     protected override async Task OnInitializedAsync()
     {
         forecasts = await Http.GetFromJsonAsync<WeatherForecast[]>("sample-data/weather.json");
+
+        //weatherResponse = await Http.GetFromJsonAsync<Models.WeatherResponse>("http://api.openweathermap.org/data/2.5/weather?q=Argentina,ar&APPID=bb0335acd4e0f8ddc002c0472f2ffb57&units=Metric");
+        string responseString = "";
+
+        HttpResponseMessage response;
+        try { response = await Http.GetAsync(endpoint); }
+        catch (Exception ex) { throw ex; }
+
+        if (response.IsSuccessStatusCode)
+        {
+            var json = await response.Content.ReadAsStringAsync();
+            weatherResponse = JsonConvert.DeserializeObject<Models.WeatherResponse>(json);
+            //weatherResponse = JsonConvert.DeserializeObject(json, typeof(Models.WeatherResponse));
+        }
     }
 
     public class WeatherForecast

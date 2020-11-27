@@ -1,0 +1,88 @@
+﻿@page "/current"
+@using Newtonsoft.Json
+@inject HttpClient Http
+
+@* Location and Date *@
+<h3>CurrentWeather</h3>
+@if(weatherResponse == null)
+{
+    <p><em> Loading... </em></p>
+}
+else
+{
+
+<div class="container p-3">
+    <div class="container p-3">
+        <div class="card">
+            <p><em>@weatherResponse.Sys.Country, @weatherResponse.Name</em></p>
+            <h6 class="card-subtitle">@DateTime.Now.ToString("dd/MM/yyyy")</h6>
+        </div>
+    </div>
+
+    <div class="container p-3">
+        <div class="card">
+            <div class="card-header">
+                <p><em>@weatherResponse.Name</em></p>
+                <p><em>@weatherResponse.Main.Temperature</em></p>
+                <p><em>@weatherResponse.Main.Minimum</em></p>
+                <p><em>@weatherResponse.Main.Maximum</em></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="width: 18rem;">
+        <img class="card-img-top" src="@countryFlag" alt="@weatherResponse.Name">
+        <div class="card-body">
+            <h5 class="card-title">@weatherResponse.Name</h5>
+            <p class="card-text">Current Weather for @weatherResponse.Name</p>
+        </div>
+        <ul class="list-group list-group-flush">
+            <li class="list-group-item">
+                <div class="row">
+                    <div class="col-4">Current</div>
+                    <div class="col-4">@weatherResponse.Main.Temperature</div>
+                </div>
+            </li>
+            <li class="list-group-item">
+                <div class="row">
+                    <div class="col-4">Minimum</div>
+                    <div class="col-4">@weatherResponse.Main.Minimum</div>
+                </div>
+            </li>
+            <li class="list-group-item">
+                <div class="row">
+                    <div class="col-4">Maximum</div>
+                    <div class="col-4">@weatherResponse.Main.Maximum</div>
+                </div>
+            </li>
+        </ul>
+        <div class="card-body">
+            <a href="#" class="card-link">Card link</a>
+            <a href="#" class="card-link">Another link</a>
+        </div>
+    </div>
+</div>
+}
+
+@code {
+    private string country;
+    private string countryFlag;
+    private Models.WeatherResponse weatherResponse;
+    private const string endpoint = "http://api.openweathermap.org/data/2.5/weather?q=Argentina,ar&APPID=bb0335acd4e0f8ddc002c0472f2ffb57&units=Metric";
+
+    protected override async Task OnInitializedAsync()
+    {
+        HttpResponseMessage response;
+        try { response = await Http.GetAsync(endpoint); }
+        catch (Exception ex) { throw ex; }
+
+        if (response.IsSuccessStatusCode)
+        {
+            var json = await response.Content.ReadAsStringAsync();
+            weatherResponse = JsonConvert.DeserializeObject<Models.WeatherResponse>(json);
+            BuildCountryFlag();
+        }
+    }
+
+    private void BuildCountryFlag() => countryFlag = $"https://www.countryflags.io/{weatherResponse.Sys.Country.ToLower()}/shiny/64.png";
+}
